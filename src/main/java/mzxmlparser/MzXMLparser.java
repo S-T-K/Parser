@@ -55,60 +55,78 @@ public class MzXMLparser {
         Adducter adducter = new Adducter(allRows);
         List<String[]> allAdducts =  adducter.makeAdducts();
         
+        float[] desiredMZ = new float[allAdducts.size()];
+        for (int i=0; i<allAdducts.size(); i++) {
+            desiredMZ[i]=Float.parseFloat(allAdducts.get(i)[2]);
+            
+        }
+        
+        
+        
+        
+        
+        
+        
         
         //List of all graphers, one for each substance
-        List<TICGrapher> graphers = new ArrayList<TICGrapher>();
+        List<NormTICGrapher> graphers = new ArrayList<NormTICGrapher>();
         PDFPrinter printer = new PDFPrinter();
         
         
-        for (int i = 0; i < allAdducts.size(); i++) {
-            
-            List<ExtractedMZ> listofextracts = new ArrayList<ExtractedMZ>();
-            for (int j = 0; j<files.size(); j++) {
-                
-                DomParser dpe = new DomParser(files.get(j));
+        
+        List<ExtractedMZ> listofextracts1 = new ArrayList<ExtractedMZ>();
+        List<ExtractedMZ> listofextracts2 = new ArrayList<ExtractedMZ>();
+        
+        
+        for (int f = 0; f<files.size(); f++) {
+                DomParser dpe = new DomParser(files.get(f));
                 List<Scan> testlist = dpe.ParseFile();
-                
-                
-                float mz = Float.valueOf(allAdducts.get(i)[2]);
-                ExtractedMZ testextract = new ExtractedMZ(testlist, files.get(j).toString());
-                testextract.binaryextract(1, mz, 10);
-                listofextracts.add(testextract);
-                
-                
-            }
-            List<ExtractedMZ> listofextracts2 = new ArrayList<ExtractedMZ>();
-            for (int j = 0; j<files2.size(); j++) {
-                
-                DomParser dpe = new DomParser(files2.get(j));
-                List<Scan> testlist = dpe.ParseFile();
-                
-                
-                float mz = Float.valueOf(allAdducts.get(i)[2]);
-                ExtractedMZ testextract = new ExtractedMZ(testlist, files2.get(j).toString());
-                testextract.binaryextract(1, mz, 10);
-                listofextracts2.add(testextract);
-               
-                
-            }
-            
-            TICGrapher demo = new TICGrapher(printer, allAdducts.get(i)[0] + "  " + allAdducts.get(i)[2] + " m/z", listofextracts, listofextracts2, files.size(), Float.valueOf(allAdducts.get(i)[1]) - 2, Float.valueOf(allAdducts.get(i)[1]) + 2);
-            demo.pack();
-            
-            RefineryUtilities.centerFrameOnScreen(demo);
-            demo.setVisible(true);
-            MassGrapher demo2 = new MassGrapher(printer, allAdducts.get(i)[0] + "  " + allAdducts.get(i)[2] + " m/z", listofextracts, listofextracts2, files.size(), Float.valueOf(allAdducts.get(i)[1]) - 2, Float.valueOf(allAdducts.get(i)[1]) + 2, Float.valueOf(allAdducts.get(i)[2]));
-            demo2.pack();
-            RefineryUtilities.centerFrameOnScreen(demo2);
-            demo2.setVisible(true);
-            
-            printer.printChart();
-            
+   
+                ExtractedMZ testextract = new ExtractedMZ(testlist, files.get(f).toString());
+                testextract.extract(1, desiredMZ, 10);
+                listofextracts1.add(testextract);
+                System.out.println(f);
             
         }
-    
-
+        
+        for (int f = 0; f<files2.size(); f++) {
+                DomParser dpe = new DomParser(files2.get(f));
+                List<Scan> testlist = dpe.ParseFile();
+   
+                ExtractedMZ testextract = new ExtractedMZ(testlist, files2.get(f).toString());
+                testextract.extract(1, desiredMZ, 10);
+                listofextracts2.add(testextract);
+            System.out.println(f);
+        }
+        
+       
+        
+        for (int a = 0; a<allAdducts.size(); a++) {
+            
+            TICGrapher demo1 = new TICGrapher(a,printer, allAdducts.get(a)[0] + "  " + allAdducts.get(a)[2] + " m/z", listofextracts1, listofextracts2, files.size(), Float.valueOf(allAdducts.get(a)[1]) - 2, Float.valueOf(allAdducts.get(a)[1]) + 2);
+          
+            
+            NormTICGrapher demo = new NormTICGrapher(a,printer, allAdducts.get(a)[0] + "  " + allAdducts.get(a)[2] + " m/z", listofextracts1, listofextracts2, files.size(), Float.valueOf(allAdducts.get(a)[1]) - 2, Float.valueOf(allAdducts.get(a)[1]) + 2);
+            
+            //demo.setVisible(true);
+            
+            
+            MassGrapher demo2 = new MassGrapher(a, printer, allAdducts.get(a)[0] + "  " + allAdducts.get(a)[2] + " m/z", listofextracts1, listofextracts2, files.size(), Float.valueOf(allAdducts.get(a)[1]) - 2, Float.valueOf(allAdducts.get(a)[1]) + 2, Float.valueOf(allAdducts.get(a)[2]));
+            
+            //demo2.setVisible(true);
+            
+           
+           
+            
+            
+            System.out.println(a);
+        }
+         printer.setFilesblack(files);
+         printer.setFilesred(files2);
+            
+         printer.printChart();
+    System.out.println("Done");
+    }
     }
 
-}
 

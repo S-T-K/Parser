@@ -6,6 +6,7 @@
 package mzxmlparser;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -16,11 +17,10 @@ public class ExtractedMZ {
 
     private String name;
     private List<Scan> listofScans;
-    public List<Float> retentionTimeList = new ArrayList<Float>();
-    public List<Float> intensityList = new ArrayList<Float>();
-    public List<Float> massList = new ArrayList<Float>();
-    public List<Float> completeRetentionTimeList = new ArrayList<Float>();
-    public List<Float> completeIntensityList = new ArrayList<Float>();
+    public List<ArrayList<Float>> retentionTimeList = new ArrayList<ArrayList<Float>>();
+    public List<ArrayList<Float>> intensityList = new ArrayList<ArrayList<Float>>();
+    public List<ArrayList<Float>> massList = new ArrayList<ArrayList<Float>>();
+
 
     public ExtractedMZ(List<Scan> listofScans, String name) {
         this.listofScans = listofScans;
@@ -28,83 +28,71 @@ public class ExtractedMZ {
     }
 
     //method to extract desired m/z into 2 arrays with retentiontime and intensity
-    public void extract(int msInstrumentID, float desiredMZ, float ppm) {
+    public void extract(int msInstrumentID, float[] desiredMZ, float ppm) {
+        float[] lowerLimit = new float[desiredMZ.length];
+        float[] upperLimit = new float[desiredMZ.length];
+        
+        for (int i = 0; i<desiredMZ.length; i++) {
+        lowerLimit[i] = desiredMZ[i] - (desiredMZ[i] / 1000000 * ppm);
+        upperLimit[i] = desiredMZ[i] + (desiredMZ[i] / 1000000 * ppm);
+        }
+        
+        for (int m =0; m<desiredMZ.length; m++) {
+            this.retentionTimeList.add(new ArrayList<Float>());
+            this.intensityList.add(new ArrayList<Float>());
+            this.massList.add(new ArrayList<Float>());
+            
+        }
+        
+        
+        boolean[] found = new boolean[desiredMZ.length]; 
+        Arrays.fill(found, false);
 
-        float lowerLimit = desiredMZ - (desiredMZ / 1000000 * ppm);
-        float upperLimit = desiredMZ + (desiredMZ / 1000000 * ppm);
-        boolean found = false;   // check if there is already an intensity for the RT
+
         for (int i = 0; i < listofScans.size(); i++) {    //for all scans
-            found = false;
+            Arrays.fill(found, false);
             if (listofScans.get(i).getMsInstrumentID()==msInstrumentID) {   // only for the desired instrumentID
+                
             for (int j = 0; j < listofScans.get(i).getPeakscount(); j++) {  //for all peaks in scan
 
-                if (listofScans.get(i).getMassovercharge()[j] >= lowerLimit) {   // if mass of peak is greater than lower limit
+                
+                for (int m =0; m<desiredMZ.length; m++) {
+                    
+                    
+                if (listofScans.get(i).getMassovercharge()[j] >= lowerLimit[m]) {   // if mass of peak is greater than lower limit
 
-                    if (listofScans.get(i).getMassovercharge()[j] > upperLimit) {    // and smaller than upper limit
-                        if (!found) {   // if not found, add 0 as intensity on the time scale
-                            completeRetentionTimeList.add(listofScans.get(i).getRetentionTime());
-                            completeIntensityList.add((float) 0.0);
-                            //System.out.println("Not found");
+                    if (listofScans.get(i).getMassovercharge()[j] <= upperLimit[m]) {    // and smaller than upper limit
+                    retentionTimeList.get(m).add(listofScans.get(i).getRetentionTime());
+                    intensityList.get(m).add(listofScans.get(i).getIntensity()[j]);
+                    massList.get(m).add(listofScans.get(i).getMassovercharge()[j]);
+                    found[m] = true;
+                    
+                 
+                    } else {
+ 
+                        if (!found[m]) {   // if not found, add 0 as intensity on the time scale
+                            retentionTimeList.get(m).add(listofScans.get(i).getRetentionTime());
+                            
+                            intensityList.get(m).add((float) 0.0);
+                            massList.get(m).add(0.0f);
+                            found[m]=true;
                         }
-                        break;
                     }
-                    retentionTimeList.add(listofScans.get(i).getRetentionTime());   // add retentionTime
-                    intensityList.add(listofScans.get(i).getIntensity()[j]);    //add intensity
-                    completeRetentionTimeList.add(listofScans.get(i).getRetentionTime());
-                    completeIntensityList.add(listofScans.get(i).getIntensity()[j]);
-                    found = true;
-                    //System.out.println(listofScans.get(i).getRetentionTime() / 60);   //print time in minutes
+                    }
+                    
+                    
+                    
 
                 }
 
             }
-        }
-        }
-
-    }
-
-    public void binaryextract(int msInstrumentID, float desiredMZ, float ppm) {
-        float lowerLimit = desiredMZ - (desiredMZ / 1000000 * ppm);
-        float upperLimit = desiredMZ + (desiredMZ / 1000000 * ppm);
-        int start;
-        int end;
-        int middle;
-        float value;
-
-        for (int i = 0; i < listofScans.size(); i++) {    //for all scans 
-            if (listofScans.get(i).getMsInstrumentID()==msInstrumentID) { // only for the desired instrumentID
-            start = 0;
-            end = listofScans.get(i).getPeakscount() - 1;
-
-            while (start <= end) {
-                middle = (int) (start+end)/2;
-                value=listofScans.get(i).getMassovercharge()[middle];
-                
-                if (value <= upperLimit && value >= lowerLimit) {
-                    retentionTimeList.add(listofScans.get(i).getRetentionTime());
-                    intensityList.add(listofScans.get(i).getIntensity()[middle]);
-                    completeRetentionTimeList.add(listofScans.get(i).getRetentionTime());
-                    completeIntensityList.add(listofScans.get(i).getIntensity()[middle]);
-                    massList.add(listofScans.get(i).getMassovercharge()[middle]);
-                
-                    break;
-                }
-                if (value < upperLimit) {
-                    start = middle+1;
-                } else {
-                    end = middle-1;
-                }
-
-            } 
-            if (start>end){
-                completeRetentionTimeList.add(listofScans.get(i).getRetentionTime());
-                completeIntensityList.add((float)0.0);
-                massList.add((float)0.0);
             }
-                
         }
         }
-    }
+
+    
+
+    
 
     /**
      * @return the name

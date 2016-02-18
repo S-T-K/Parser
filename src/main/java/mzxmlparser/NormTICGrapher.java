@@ -36,7 +36,7 @@ import org.jfree.ui.RefineryUtilities;
  *
  * @author stefankoch
  */
-public class TICGrapher extends ApplicationFrame {
+public class NormTICGrapher extends ApplicationFrame {
 JFreeChart chart;
 PDFPrinter printer;
     
@@ -45,18 +45,19 @@ PDFPrinter printer;
      *
      * @param title  the frame title.
      */
-    public TICGrapher (int a, PDFPrinter printer,final String title, List<ExtractedMZ> extracteddata, List<ExtractedMZ> extracteddata2, int sizeoffirstset, float lower, float upper) throws DocumentException, FileNotFoundException {
+    public NormTICGrapher (int a, PDFPrinter printer,final String title, List<ExtractedMZ> extracteddata, List<ExtractedMZ> extracteddata2, int sizeoffirstset, float lower, float upper) throws DocumentException, FileNotFoundException {
 
         super(title);
 
         this.printer=printer;
         
-        final XYDataset dataset = createDataset(a, extracteddata, extracteddata2);
+        final XYDataset dataset = createDataset(a, extracteddata, extracteddata2, lower, upper);
         final JFreeChart chart = createChart(dataset, sizeoffirstset, extracteddata.size()+extracteddata2.size());
         final ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
         setContentPane(chartPanel);
         chart.getXYPlot().getDomainAxis().setRange(lower, upper);
+        chart.getXYPlot().getRangeAxis().setRange(0, 1);
         printer.addChart(chart);
 
     }
@@ -66,17 +67,23 @@ PDFPrinter printer;
      * 
      * @return a sample dataset.
      */
-    private XYDataset createDataset(int a, List<ExtractedMZ> extracteddata, List<ExtractedMZ> extracteddata2) {
+    private XYDataset createDataset(int a, List<ExtractedMZ> extracteddata, List<ExtractedMZ> extracteddata2, float lower, float upper) {
         final XYSeriesCollection dataset = new XYSeriesCollection();
+        
+        
+   
         
         
         for (int i = 0; i<extracteddata.size(); i++) {
         
         final XYSeries series = new XYSeries(extracteddata.get(i).getName());
+        
+        
+        float maxIntensity = getMax(extracteddata.get(i).retentionTimeList.get(a), extracteddata.get(i).intensityList.get(a), lower, upper);
         float max = 0;
         
         for (int j = 0; j< extracteddata.get(i).retentionTimeList.get(a).size(); j++) {
-          max = extracteddata.get(i).intensityList.get(a).get(j);
+            max = extracteddata.get(i).intensityList.get(a).get(j);
             while (j<extracteddata.get(i).retentionTimeList.get(a).size()-1 && Math.abs(extracteddata.get(i).retentionTimeList.get(a).get(j) - extracteddata.get(i).retentionTimeList.get(a).get(j+1)) < 0.01) {
                 if (extracteddata.get(i).intensityList.get(a).get(j) > max) {
                     max = extracteddata.get(i).intensityList.get(a).get(j+1);
@@ -84,8 +91,9 @@ PDFPrinter printer;
                 j++;
                 
             }
-           
-            series.add(extracteddata.get(i).retentionTimeList.get(a).get(j)/60,max);
+          
+            
+            series.add(extracteddata.get(i).retentionTimeList.get(a).get(j)/60,max/maxIntensity); 
         }
         dataset.addSeries(series);
         }
@@ -93,19 +101,19 @@ PDFPrinter printer;
         for (int i = 0; i<extracteddata2.size(); i++) {
         
         final XYSeries series = new XYSeries(extracteddata2.get(i).getName());
+        float maxIntensity = getMax(extracteddata2.get(i).retentionTimeList.get(a), extracteddata2.get(i).intensityList.get(a), lower, upper);
         float max = 0;
         
         for (int j = 0; j< extracteddata2.get(i).retentionTimeList.get(a).size(); j++) {
-          max = extracteddata2.get(i).intensityList.get(a).get(j);
-            while (j<extracteddata2.get(i).retentionTimeList.get(a).size()-1 && Math.abs(extracteddata2.get(i).retentionTimeList.get(a).get(j) - extracteddata2.get(i).retentionTimeList.get(a).get(j+1)) < 0.01) {
+            max = extracteddata2.get(i).intensityList.get(a).get(j);
+            while (j<(extracteddata2.get(i).retentionTimeList.get(a).size()-1) && Math.abs(extracteddata2.get(i).retentionTimeList.get(a).get(j) - extracteddata2.get(i).retentionTimeList.get(a).get(j+1)) < 0.01) {
                 if (extracteddata2.get(i).intensityList.get(a).get(j) > max) {
                     max = extracteddata2.get(i).intensityList.get(a).get(j+1);
                 }
                 j++;
                 
             }
-           
-            series.add(extracteddata2.get(i).retentionTimeList.get(a).get(j)/60,max);
+            series.add(extracteddata2.get(i).retentionTimeList.get(a).get(j)/60,max/maxIntensity); 
         }
         dataset.addSeries(series);
         }
@@ -149,7 +157,7 @@ PDFPrinter printer;
         final XYPlot plot = chart.getXYPlot();
         plot.setBackgroundPaint(Color.white);
     //    plot.setAxisOffset(new Spacer(Spacer.ABSOLUTE, 5.0, 5.0, 5.0, 5.0));
-       plot.setDomainGridlinesVisible(false);
+        plot.setDomainGridlinesVisible(false);
         plot.setRangeGridlinesVisible(false);
         
         final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer();
@@ -181,6 +189,25 @@ PDFPrinter printer;
         
     }
     
+    private float getMax (List<Float> retentionTimeList, List<Float> intensityList, float lower, float upper) {
+        
+       float max = 1; 
+       lower = lower*60;
+       upper = upper*60;
+        
+       for (int i =0; i<retentionTimeList.size(); i++) {
+          
+           if (retentionTimeList.get(i) <= upper && retentionTimeList.get(i) >= lower) {
+               if (intensityList.get(i)> max) {
+                   max = intensityList.get(i);
+               }
+           } else {
+           }
+           
+       }
+      
+        return max;
+    }
    
 
 }

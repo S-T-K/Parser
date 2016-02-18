@@ -33,19 +33,19 @@ PDFPrinter printer;
      *
      * @param title  the frame title.
      */
-    public MassGrapher (PDFPrinter printer, final String title, List<ExtractedMZ> extracteddata, List<ExtractedMZ> extracteddata2, int sizeoffirstset, float lower, float upper, float mass) {
+    public MassGrapher (int a, PDFPrinter printer, final String title, List<ExtractedMZ> extracteddata, List<ExtractedMZ> extracteddata2, int sizeoffirstset, float lower, float upper, float mass) {
 
         super(title);
 
         this.printer=printer;
         
-        final XYDataset dataset = createDataset(extracteddata, extracteddata2, mass);
+        final XYDataset dataset = createDataset(a, extracteddata, extracteddata2, mass);
         final JFreeChart chart = createChart(dataset, sizeoffirstset, extracteddata.size()+extracteddata2.size());
         final ChartPanel chartPanel = new ChartPanel(chart);
         chartPanel.setPreferredSize(new java.awt.Dimension(500, 270));
         setContentPane(chartPanel);
         chart.getXYPlot().getDomainAxis().setRange(lower, upper);
-        chart.getXYPlot().getRangeAxis().setRange(-10, 10);
+        chart.getXYPlot().getRangeAxis().setRange(-15, 15);
         printer.addChart(chart);
         
 
@@ -56,21 +56,21 @@ PDFPrinter printer;
      * 
      * @return a sample dataset.
      */
-    private XYDataset createDataset(List<ExtractedMZ> extracteddata, List<ExtractedMZ> extracteddata2, float mass) {
+    private XYDataset createDataset(int a, List<ExtractedMZ> extracteddata, List<ExtractedMZ> extracteddata2, float mass) {
         final XYSeriesCollection dataset = new XYSeriesCollection();
         
         
         for (int i = 0; i<extracteddata.size(); i++) {
         
         final XYSeries series = new XYSeries(extracteddata.get(i).getName());
-        float maxIntensity = Collections.max(extracteddata.get(i).completeIntensityList)/20;
+        float maxIntensity = Collections.max(extracteddata.get(i).intensityList.get(a))/20;
         
         
-        for (int j = 0; j< extracteddata.get(i).completeRetentionTimeList.size(); j++) {
-            int count = (int) (extracteddata.get(i).completeIntensityList.get(j)/maxIntensity);
+        for (int j = 0; j< extracteddata.get(i).retentionTimeList.get(a).size(); j++) {
+            int count = (int) (extracteddata.get(i).intensityList.get(a).get(j)/maxIntensity);
             for (int s = 0; s<= count; s++ ) {
-                float deviation = (extracteddata.get(i).massList.get(j)-mass)/(mass/1000000);
-            series.add(extracteddata.get(i).completeRetentionTimeList.get(j)/60,deviation);
+                float deviation = (extracteddata.get(i).massList.get(a).get(j)-mass)/(mass/1000000);
+            series.add(extracteddata.get(i).retentionTimeList.get(a).get(j)/60,deviation);
             }
         }
         dataset.addSeries(series);
@@ -79,13 +79,13 @@ PDFPrinter printer;
         for (int i = 0; i<extracteddata2.size(); i++) {
         
         final XYSeries series = new XYSeries(extracteddata2.get(i).getName());
-        float maxIntensity = Collections.max(extracteddata2.get(i).completeIntensityList)/20;
+        float maxIntensity = Collections.max(extracteddata2.get(i).intensityList.get(a))/20;
         
-        for (int j = 0; j< extracteddata2.get(i).completeRetentionTimeList.size(); j++) {
-            int count = (int) (extracteddata2.get(i).completeIntensityList.get(j)/maxIntensity);
+        for (int j = 0; j< extracteddata2.get(i).retentionTimeList.get(a).size(); j++) {
+            int count = (int) (extracteddata2.get(i).intensityList.get(a).get(j)/maxIntensity);
             for (int s = 0; s<= count; s++ ) {
-                float deviation = (extracteddata2.get(i).massList.get(j)-mass)/(mass/1000000);
-            series.add(extracteddata2.get(i).completeRetentionTimeList.get(j)/60,deviation);
+                float deviation = (extracteddata2.get(i).massList.get(a).get(j)-mass)/(mass/1000000);
+            series.add(extracteddata2.get(i).retentionTimeList.get(a).get(j)/60,deviation);
             }
         }
         dataset.addSeries(series);
@@ -130,8 +130,8 @@ PDFPrinter printer;
         final XYPlot plot = chart.getXYPlot();
         plot.setBackgroundPaint(Color.white);
     //    plot.setAxisOffset(new Spacer(Spacer.ABSOLUTE, 5.0, 5.0, 5.0, 5.0));
-        plot.setDomainGridlinePaint(Color.lightGray);
-        plot.setRangeGridlinePaint(Color.lightGray);
+        plot.setDomainGridlinesVisible(false);
+        plot.setRangeGridlinesVisible(false);
         
         final XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(false, true);
         
@@ -159,4 +159,23 @@ PDFPrinter printer;
         
     }
 
+    private float getMax (List<Float> retentionTimeList, List<Float> intensityList, float lower, float upper) {
+        
+       float max = 1; 
+       lower = lower*60;
+       upper = upper*60;
+        
+       for (int i =0; i<retentionTimeList.size(); i++) {
+          
+           if (retentionTimeList.get(i) <= upper && retentionTimeList.get(i) >= lower) {
+               if (intensityList.get(i)> max) {
+                   max = intensityList.get(i);
+               }
+           } else {
+           }
+           
+       }
+      
+        return max;
+    }
 }
