@@ -16,6 +16,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 /**
  *
@@ -55,6 +56,13 @@ public class MzXMLparser {
         Adducter adducter = new Adducter(allRows);
         List<String[]> allAdducts =  adducter.makeAdducts();
         
+        for (int i =0; i<allAdducts.size(); i++) {
+            System.out.println(Arrays.toString(allAdducts.get(i)));
+            
+        }
+        
+        
+        
         float[] desiredMZ = new float[allAdducts.size()];
         for (int i=0; i<allAdducts.size(); i++) {
             desiredMZ[i]=Float.parseFloat(allAdducts.get(i)[2]);
@@ -85,7 +93,7 @@ public class MzXMLparser {
                 ExtractedMZ testextract = new ExtractedMZ(testlist, files.get(f).toString());
                 testextract.extract(1, desiredMZ, 10);
                 listofextracts1.add(testextract);
-                System.out.println(f);
+                System.out.println("Phase 1: " + ((double)f/(double)files.size())*100+ "%") ;
             
         }
         
@@ -96,7 +104,7 @@ public class MzXMLparser {
                 ExtractedMZ testextract = new ExtractedMZ(testlist, files2.get(f).toString());
                 testextract.extract(1, desiredMZ, 10);
                 listofextracts2.add(testextract);
-            System.out.println(f);
+             System.out.println("Phase 2: " + ((double)f/(double)files2.size())*100+ "%") ;
         }
         
        
@@ -119,7 +127,7 @@ public class MzXMLparser {
            
             
             
-            System.out.println(a);
+             System.out.println("Phase 3: " + ((double)a/(double)allAdducts.size())*100+ "%") ;
         }
          printer.setFilesblack(files);
          printer.setFilesred(files2);
