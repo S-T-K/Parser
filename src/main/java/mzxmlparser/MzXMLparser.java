@@ -50,7 +50,7 @@ public class MzXMLparser {
         settings.getFormat().setLineSeparator("\n");
 
         TsvParser parser = new TsvParser(settings);
-        FileReader reader = new FileReader("Substanzen.txt");
+        FileReader reader = new FileReader("Substanzen2.txt");
         List<String[]> allRows = parser.parseAll(reader);
         
         Adducter adducter = new Adducter(allRows);
@@ -91,7 +91,7 @@ public class MzXMLparser {
                 List<Scan> testlist = dpe.ParseFile();
    
                 ExtractedMZ testextract = new ExtractedMZ(testlist, files.get(f).toString());
-                testextract.extract(1, desiredMZ, 10);
+                testextract.extract(1, desiredMZ, 7);
                 listofextracts1.add(testextract);
                 System.out.println("Phase 1: " + ((double)f/(double)files.size())*100+ "%") ;
             
@@ -102,7 +102,7 @@ public class MzXMLparser {
                 List<Scan> testlist = dpe.ParseFile();
    
                 ExtractedMZ testextract = new ExtractedMZ(testlist, files2.get(f).toString());
-                testextract.extract(1, desiredMZ, 10);
+                testextract.extract(1, desiredMZ, 7);
                 listofextracts2.add(testextract);
              System.out.println("Phase 2: " + ((double)f/(double)files2.size())*100+ "%") ;
         }
