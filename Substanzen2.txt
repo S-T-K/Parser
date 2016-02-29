@@ -1,0 +1,7 @@
+Chrysoeriol	21.82	300.0633876
+Schaftoside	13.71	564.1479044
+DON	8.01	296.1259876
+Tryptophan	7.86	204.0898772
+Phenylalanine	4.54	165.0789782
+
+
